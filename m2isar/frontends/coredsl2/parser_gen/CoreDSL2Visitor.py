@@ -1,4 +1,4 @@
-# Generated from CoreDSL2.g4 by ANTLR 4.10.1
+# Generated from CoreDSL2.g4 by ANTLR 4.11.1
 from antlr4 import *
 if __name__ is not None and "." in __name__:
     from .CoreDSL2Parser import CoreDSL2Parser
@@ -304,13 +304,13 @@ class CoreDSL2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CoreDSL2Parser#deref_expression.
-    def visitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
+    # Visit a parse tree produced by CoreDSL2Parser#prefix_expression.
+    def visitPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CoreDSL2Parser#prefix_expression.
-    def visitPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
+    # Visit a parse tree produced by CoreDSL2Parser#deref_expression.
+    def visitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
         return self.visitChildren(ctx)
 
 
