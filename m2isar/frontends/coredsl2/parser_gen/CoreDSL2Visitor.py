@@ -304,13 +304,13 @@ class CoreDSL2Visitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CoreDSL2Parser#deref_expression.
-    def visitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
+    # Visit a parse tree produced by CoreDSL2Parser#prefix_expression.
+    def visitPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by CoreDSL2Parser#prefix_expression.
-    def visitPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
+    # Visit a parse tree produced by CoreDSL2Parser#deref_expression.
+    def visitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
         return self.visitChildren(ctx)
 
 

@@ -539,21 +539,21 @@ class CoreDSL2Listener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by CoreDSL2Parser#deref_expression.
-    def enterDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
-        pass
-
-    # Exit a parse tree produced by CoreDSL2Parser#deref_expression.
-    def exitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
-        pass
-
-
     # Enter a parse tree produced by CoreDSL2Parser#prefix_expression.
     def enterPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
         pass
 
     # Exit a parse tree produced by CoreDSL2Parser#prefix_expression.
     def exitPrefix_expression(self, ctx:CoreDSL2Parser.Prefix_expressionContext):
+        pass
+
+
+    # Enter a parse tree produced by CoreDSL2Parser#deref_expression.
+    def enterDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
+        pass
+
+    # Exit a parse tree produced by CoreDSL2Parser#deref_expression.
+    def exitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
         pass
 
 

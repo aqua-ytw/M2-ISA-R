@@ -342,6 +342,63 @@ class Memory(SizedRefOrConst):
 		"""Return true if this memory is tagged as being the main memory array."""
 		return MemoryAttribute.IS_MAIN_MEM in self.attributes
 
+class CompositeItem(SizedRefOrConst):
+	"""TODO"""
+
+	integer_type: IntegerType
+	_width: Union[int, "Constant", "BaseNode"]
+	"""The array width of this parameter."""
+
+	def __init__(self, name, size, integer_type: IntegerType, width=1):  # TODO: support non-IntegerType
+		self.integer_type = integer_type
+		self._width = width
+		super().__init__(name, self.integer_type.width * self.width)
+
+	@property
+	def width(self):
+		"""Returns the resolved array width value."""
+		return get_const_or_val(self._width)
+
+	def __str__(self) -> str:
+		return f'{super().__str__()}, size2={self.integer_type.width} width={self.width}'
+
+class CompositeType(DataType2):
+	"""TODO"""
+
+	def __init__(self, name, children: list):
+		self.name = name
+		self.children = children
+
+		super().__init__(name)
+
+class UnionType(CompositeType):
+	pass
+
+class StructType(CompositeType):
+	pass
+
+class Composite(SizedRefOrConst):
+	"""TODO"""
+
+	def __init__(self, name, comp_type: CompositeType):
+		self.comp_type = comp_type
+		size = sum([x.size for x in self.comp_type.children])
+
+		super().__init__(name, size)
+
+
+class Union(Composite):
+	"""TODO"""
+	def __init__(self, name, union_type: UnionType):
+		super().__init__(name, union_type)
+
+
+class Struct(Composite):
+	"""TODO"""
+	def __init__(self, name, struct_type: StructType):
+		super().__init__(name, struct_type)
+
+
 @dataclasses.dataclass
 class BitVal:
 	"""A class representing a fixed bit sequence in an instruction encoding.
@@ -394,6 +451,8 @@ class Instruction(SizedRefOrConst):
 	ext_name: str
 	fields: "dict[str, BitFieldDescr]"
 	scalars: "dict[str, Scalar]"
+	comp_types: "dict[str, Composite]"
+	comps: "dict[str, Composite]"
 	throws: bool
 
 	mask: int
@@ -407,6 +466,8 @@ class Instruction(SizedRefOrConst):
 		self.encoding = encoding
 		self.fields: "dict[str, BitFieldDescr]" = {}
 		self.scalars = {}
+		self.comp_types = {}
+		self.comps = {}
 		self.disass = disass
 		self.operation = operation if operation is not None else Operation([])
 		self.throws = False

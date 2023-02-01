@@ -181,6 +181,8 @@ def main():
 				sys.exit(1)
 
 			instr_def.scalars = behav_builder._scalars
+			instr_def.comp_types = behav_builder._comp_types
+			instr_def.comps = behav_builder._comps
 
 			if isinstance(op, list):
 				op = behav.Operation(op)
@@ -198,6 +200,13 @@ def main():
 
 			op.statements.insert(0, pc_inc)
 			instr_def.operation = op
+			print("instr_def.operation.statements", instr_def.operation.statements)
+	instr = [value for _, value in models["RV32IMACFD"].instructions_by_ext["XCoreVMac"].items() if value.name == "CV_MAXU_B"][0]
+	stmts = instr.operation.statements[1:]
+	scalars = instr.scalars
+	comp_types = instr.comp_types
+	comps = instr.comps
+	print("models", stmts, scalars, comp_types, comps)
 
 	logger.info("dumping model")
 	with open(model_path / (abs_top_level.stem + '.m2isarmodel'), 'wb') as f:

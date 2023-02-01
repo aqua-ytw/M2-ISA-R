@@ -31,6 +31,8 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 		self._memory_aliases = memory_aliases
 		self._fields = fields
 		self._scalars = {}
+		self._comp_types = {}
+		self._comps = {}
 		self._functions = functions
 		self.warned_fns = warned_fns if warned_fns is not None else set()
 
@@ -112,27 +114,118 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 		ret_decls = []
 
 		# iterate over all contained declarations
-		for decl in decls:
-			name = decl.name.text
+		print("decls2", decls)
+		if len(decls) == 0:  # "typedef"
+			if isinstance(type_, arch.CompositeType):
+				ct = type_
+				self._comp_types[ct.name] = ct
+		else:
+			for decl in decls:
+				name = decl.name.text
+				print("name", name)
 
-			# instantiate a scalar and its definition
-			s = arch.Scalar(name, None, StaticType.NONE, type_.width, arch.DataType.S if type_.signed else arch.DataType.U)
-			self._scalars[name] = s
-			sd = behav.ScalarDefinition(s)
+				# instantiate a scalar and its definition
+				print("type_", type_, ctx.type_, type(ctx.type_))
+				"""if isinstance(type_, str):
+					if type_ == "union":
+						c = arch.Union(name, [])
+						ct = arch.UnionType(name2, [])
+						cd = behav.UnionDefinition(c)
+						if decl.init:
+							init = self.visit(decl.init)
+							print("init", init)
+						# assert not decl.init
+					elif type_ == "struct":
+						c = arch.Struct(name, [])
+						ct = arch.StructType(name2, [])
+						cd = behav.StructDefinition(c)
+						if decl.init:
+							raise NotImplementedError
+					self._comp_types[name2] = ct
+					self._comps[name] = c
+					ret_decls.append(cd)
+					continue """
+				if isinstance(type_, arch.CompositeType):
+					ct = type_
+					if isinstance(type_, arch.UnionType):
+						c = arch.Union(name, ct)
+						cd = behav.UnionDefinition(c)
+					elif isinstance(type_, arch.StructType):
+						raise NotImplementedError
+					else:
+						assert False
 
-			# if initializer is present, generate an assignment to apply
-			# initialization to the scalar
-			if decl.init:
-				init = self.visit(decl.init)
+					if decl.init:
+						init_ = self.visit(decl.init)
+						print("init_", init_)
 
-				a = behav.Assignment(sd, init)
-				ret_decls.append(a)
+					self._comp_types[ct.name] = ct
+					self._comps[name] = c
+					ret_decls.append(cd)
+				else:
+					s = arch.Scalar(name, None, StaticType.NONE, type_.width, arch.DataType.S if type_.signed else arch.DataType.U)
+					self._scalars[name] = s
+					sd = behav.ScalarDefinition(s)
 
-			# if not only generate the declaration
-			else:
-				ret_decls.append(sd)
+					# if initializer is present, generate an assignment to apply
+					# initialization to the scalar
+					if decl.init:
+						init = self.visit(decl.init)
 
+						a = behav.Assignment(sd, init)
+						ret_decls.append(a)
+
+					# if not only generate the declaration
+					else:
+						ret_decls.append(sd)
+		print("ret_decls", ret_decls)
 		return ret_decls
+
+	def visitStruct_declaration(self, ctx:CoreDSL2Parser.Struct_declarationContext):
+		print("visitStruct_declaration")
+		input("~")
+		type_ = self.visit(ctx.specifier)
+		print("D", type_, type_.width, type_.signed, type_.ptr)
+		decls = []
+		for decl in ctx.declarators:
+			name = decl.name.text
+			decl_ = self.visit(decl)
+			if decl_ is not None:
+				assert not decl_.signed
+				print("C", decl_, decl_.value, dir(decl_))
+				decls.append((decl_.value, name))
+			else:
+				print("C", decl_, name)
+				decls.append((1, name))
+			
+		assert len(decls) == 1
+		i = arch.CompositeItem(decls[0][1], 42, type_, decls[0][0])
+		print("i", i)
+		# print("@", (type_, decls[0]))
+		# input("@!")
+		return i
+		# return self.visitChildren(ctx)
+
+	def visitStruct_declaration_specifier(self, ctx:CoreDSL2Parser.Struct_declaration_specifierContext):
+		print("visitStruct_declaration_specifier")
+		input("~")
+		type_ = self.visit(ctx.type_)
+		print("type_", type_)
+		# print("name_", self.visit(ctx.name))
+		# qualifiers = [self.visit(obj) for obj in ctx.qualifiers]
+		# print("qualifiers", qualifiers)
+		# return self.visitChildren(ctx)
+		return type_
+
+	def visitStruct_or_union(self, ctx:CoreDSL2Parser.Struct_or_unionContext):
+		print("visitStruct_or_union")
+		assert len(ctx.children) == 1
+		kind = ctx.children[0].symbol.text
+		print("kind", kind)
+		assert kind in ["struct", "union"]
+		return kind
+		# input("~~")
+		# return self.visitChildren(ctx)
 
 	def visitReturn_statement(self, ctx: CoreDSL2Parser.Return_statementContext):
 		"""Generate a return statement."""
@@ -297,6 +390,7 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 		name = ctx.ref.text
 
 		var = self._scalars.get(name) or \
+			self._comps.get(name) or \
 			self._fields.get(name) or \
 			self._constants.get(name) or \
 			self._memory_aliases.get(name) or \
@@ -347,6 +441,16 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 		expr = self.visit(ctx.right)
 		if ctx.type_:
 			type_ = self.visit(ctx.type_)
+			print("type_", type_)
+			if isinstance(type_, arch.CompositeType):
+				if isinstance(type_, arch.UnionType):
+					
+					print("UUNNIIOONN")
+					# input("<><")
+					# raise NotImplementedError
+					return behav.UnionTypeConv(type_, expr)
+				elif isinstance(type_, arch.StructType):
+					raise NotImplementedError
 			sign = arch.DataType.S if type_.signed else arch.DataType.U
 			size = type_.width
 
@@ -397,6 +501,55 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 
 		return arch.IntegerType(1, False, None)
 
+	def visitComposite_declaration(self, ctx: CoreDSL2Parser.Composite_declarationContext):
+		# ct = arch.CompositeType(name,)
+		name = ctx.name.text
+		print("name", name)
+		decls = []
+		print("visitComposite_declaration")
+		for decl in ctx.declarations:
+			tmp = self.visit(decl)
+			# data_type, mmm = tmp
+			# name2 = decl.name.text
+			# print("data_type", data_type)
+			# print("mmm", mmm)
+			print("tmp", tmp)
+			# print("name2", name2)
+			# input("ttmmpp")
+			# d = arch.CompositeItem()
+			# decls.append(d)
+			decls.append(tmp)
+		ret = self.visit(ctx.type_)
+		if ret == "union":
+			u = arch.UnionType(name, decls)
+			print("u", u)
+			return u
+		elif ret == "struct":
+			raise NotImplementedError
+		else:
+			assert False
+		print("ret!", ret, type(ctx.type_))
+		print("decls", decls)
+		input("1")
+		# return self.visitChildren(ctx)
+		return ret
+
+	def visitComposite_reference(self, ctx: CoreDSL2Parser.Composite_referenceContext):
+		print("visitComposite_reference", ctx, dir(ctx), ctx.name.text)
+		# input("2")
+		name = ctx.name.text
+
+		var = self._comps.get(name, None) or self._comp_types.get(name, None)
+
+		# TODO: comps vs comp_types?
+
+		if var is None:
+			raise M2NameError(f"Named (composite) reference \"{name}\" does not exist!")
+
+		# return behav.CompositeReference(var)
+		# return behav.CompositeTypeReference(var)
+		return var
+
 	def visitInteger_signedness(self, ctx: CoreDSL2Parser.Integer_signednessContext):
 		"""Generate integer signedness."""
 
@@ -406,3 +559,26 @@ class BehaviorModelBuilder(CoreDSL2Visitor):
 		"""Lookup a shorthand type specifier."""
 
 		return behav.IntLiteral(SHORTHANDS[ctx.children[0].symbol.text])
+
+	def visitDeref_expression(self, ctx:CoreDSL2Parser.Deref_expressionContext):
+		print("visitDeref_expression", dir(ctx), ctx.bop.text, ctx.expr, ctx.ref.text)
+
+		assert ctx.bop.text == "."
+
+		e = self.visit(ctx.expr)
+		print("e", e, e.reference.name)
+		assert isinstance(e, behav.NamedReference)
+		name = e.reference.name
+
+		var = self._comps.get(name, None)
+
+		# TODO: comps vs comp_types?
+
+		if var is None:
+			raise M2NameError(f"Named (composite) reference \"{name}\" does not exist!")
+
+		print("var", var)
+		# import traceback
+		# traceback.print_stack()
+		return behav.DeReference(e, ctx.ref.text)
+		# return self.visitChildren(ctx)

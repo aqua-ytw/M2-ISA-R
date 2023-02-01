@@ -16,7 +16,7 @@ functions to generate code or transform the tree.
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-	from .arch import BitFieldDescr, Constant, FnParam, Function, Memory, Scalar
+	from .arch import BitFieldDescr, Constant, FnParam, Function, Memory, Scalar, Composite, Union, Struct
 
 # pylint: disable=abstract-method
 
@@ -25,11 +25,15 @@ class BaseNode:
 	empty generate function which raises a :exc:`NotImplementedError` if it is
 	not overridden."""
 
+	def __init__(self):
+		self.annotations = []
+
 	def generate(self, context):
 		raise NotImplementedError()
 
 class CodeLiteral(BaseNode):
 	def __init__(self, val) -> None:
+		super().__init__()
 		self.val = val
 
 class Operator(BaseNode):
@@ -37,12 +41,14 @@ class Operator(BaseNode):
 	:class:`.BinaryOperation`)."""
 
 	def __init__(self, op: str):
+		super().__init__()
 		self.value = op
 
 class Operation(BaseNode):
 	"""Top-level collection class containing a list of actual operations."""
 
 	def __init__(self, statements: "list[BaseNode]") -> None:
+		super().__init__()
 		self.statements = statements
 
 class BinaryOperation(BaseNode):
@@ -50,6 +56,7 @@ class BinaryOperation(BaseNode):
 	as an operator."""
 
 	def __init__(self, left: BaseNode, op: Operator, right: BaseNode):
+		super().__init__()
 		self.left = left
 		self.op = op
 		self.right = right
@@ -58,6 +65,7 @@ class SliceOperation(BaseNode):
 	"""A slicing operation for extracting bit runs from scalar values."""
 
 	def __init__(self, expr: BaseNode, left: BaseNode, right: BaseNode):
+		super().__init__()
 		self.expr = expr
 		self.left = left
 		self.right = right
@@ -66,6 +74,7 @@ class ConcatOperation(BaseNode):
 	"""A concatenating operation."""
 
 	def __init__(self, left: BaseNode, right: BaseNode) -> None:
+		super().__init__()
 		self.left = left
 		self.right = right
 
@@ -73,6 +82,7 @@ class NumberLiteral(BaseNode):
 	"""A class holding a generic number literal."""
 
 	def __init__(self, value):
+		super().__init__()
 		self.value = value
 
 class IntLiteral(NumberLiteral):
@@ -97,6 +107,7 @@ class Assignment(BaseNode):
 	"""An assignment statement."""
 
 	def __init__(self, target: BaseNode, expr: BaseNode):
+		super().__init__()
 		self.target = target
 		self.expr = expr
 
@@ -109,6 +120,7 @@ class Conditional(BaseNode):
 	"""
 
 	def __init__(self, conds: "list[BaseNode]", stmts: "list[list[BaseNode]]"):
+		super().__init__()
 		self.conds = conds
 		self.stmts = stmts
 
@@ -118,6 +130,7 @@ class Loop(BaseNode):
 	(post_test=True) loops."""
 
 	def __init__(self, cond: BaseNode, stmts: "list[BaseNode]", post_test: bool):
+		super().__init__()
 		self.cond = cond
 		self.stmts = stmts if stmts is not None else []
 		self.post_test = post_test
@@ -126,6 +139,7 @@ class Ternary(BaseNode):
 	"""A ternary expression."""
 
 	def __init__(self, cond: BaseNode, then_expr: BaseNode, else_expr: BaseNode):
+		super().__init__()
 		self.cond = cond
 		self.then_expr = then_expr
 		self.else_expr = else_expr
@@ -136,25 +150,63 @@ class ScalarDefinition(BaseNode):
 	"""
 
 	def __init__(self, scalar: "Scalar"):
+		super().__init__()
 		self.scalar = scalar
+
+class CompositeDefinition(BaseNode):
+	"""TODO"""
+
+	def __init__(self, composite: "Composite"):
+		super().__init__()
+		self.composite = composite
+
+
+class UnionDefinition(CompositeDefinition):
+	"""TODO"""
+
+	def __init__(self, union: "Union"):
+		super().__init__(union)
+
+class StructDefinition(CompositeDefinition):
+	"""TODO"""
+
+	def __init__(self, struct: "Struct"):
+		super().__init__(struct)
 
 class Return(BaseNode):
 	"""A return expression."""
 
 	def __init__(self, expr: BaseNode):
+		super().__init__()
 		self.expr = expr
 
 class UnaryOperation(BaseNode):
 	"""An unary operation, whith an operator and a right hand operand."""
 
 	def __init__(self, op: Operator, right: BaseNode):
+		super().__init__()
 		self.op = op
 		self.right = right
 
 class NamedReference(BaseNode):
 	"""A named reference to a :class:`arch.Memory`, BitFieldDescr, Scalar, Constant or FnParam."""
 
-	def __init__(self, reference: Union["Memory", "BitFieldDescr", "Scalar", "Constant", "FnParam"]):
+	def __init__(self, reference: Union["Memory", "BitFieldDescr", "Scalar", "Union", "Struct", "Constant", "FnParam"]):
+		super().__init__()
+		self.reference = reference
+
+class CompositeReference(BaseNode):
+	"""TODO"""
+
+	def __init__(self, reference: Union["Union", "Struct"]):
+		super().__init__()
+		self.reference = reference
+
+class CompositeTypeReference(BaseNode):
+	"""TODO"""
+
+	def __init__(self, reference: Union["UnionType", "StructType"]):
+		super().__init__()
 		self.reference = reference
 
 class IndexedReference(BaseNode):
@@ -162,13 +214,23 @@ class IndexedReference(BaseNode):
 	using the `right` parameter."""
 
 	def __init__(self, reference: "Memory", index: BaseNode, right: BaseNode=None):
+		super().__init__()
 		self.reference = reference
 		self.index = index
 		self.right = right
 
+class DeReference(BaseNode):
+	"""TODO"""
+
+	def __init__(self, reference: BaseNode, item: str):
+		super().__init__()
+		self.reference = reference
+		self.item = item
+
 class TypeConv(BaseNode):
 	"""A type conversion. Size can be None, in this case only the signedness is affected."""
 	def __init__(self, data_type, size, expr: BaseNode):
+		super().__init__()
 		self.data_type = data_type
 		self.size = size
 		self.expr = expr
@@ -180,10 +242,24 @@ class TypeConv(BaseNode):
 		else:
 			self.actual_size = None
 
+class CompositeTypeConv(BaseNode):
+	"""TODO"""
+	def __init__(self, comp_type, expr: BaseNode):
+		super().__init__()
+		self.comp_type = comp_type
+		self.expr = expr
+		self.size = size = sum([x.size for x in self.comp_type.children])
+		self.actual_size = 1 << (self.size - 1).bit_length()
+		self.actual_size = max(self.actual_size, 8)
+
+class UnionTypeConv(CompositeTypeConv):
+	pass
+
 class Callable(BaseNode):
 	"""A generic invocation of a callable."""
 
 	def __init__(self, ref_or_name: Union[str, "Function"], args: "list[BaseNode]") -> None:
+		super().__init__()
 		self.ref_or_name = ref_or_name
 		self.args = args if args is not None else []
 
@@ -196,4 +272,5 @@ class ProcedureCall(Callable):
 class Group(BaseNode):
 	"""A group of expressions, used e.g. for parenthesized expressions."""
 	def __init__(self, expr: BaseNode):
+		super().__init__()
 		self.expr = expr

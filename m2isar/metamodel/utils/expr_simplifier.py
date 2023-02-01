@@ -191,3 +191,9 @@ def group(self: behav.Group, context):
 		return self.expr
 
 	return self
+
+def dereference(self: behav.DeReference, context: "VisitorContext"):
+	return self
+
+def union_definition(self: behav.UnionDefinition, context: "VisitorContext"):
+	return self
