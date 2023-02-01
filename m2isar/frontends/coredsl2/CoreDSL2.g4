@@ -190,7 +190,7 @@ designator
 
 expression
 	: primary # primary_expression
-	| bop=('.' | '->') ref=IDENTIFIER # deref_expression
+	| expr=expression bop=('.' | '->') ref=IDENTIFIER # deref_expression
 	| expr=expression bop='[' left=expression (':' right=expression)? ']' # slice_expression
 	| ref=IDENTIFIER '(' (args+=expression (',' args+=expression)*)? ')' # method_call
 	| left=expression op=('++' | '--') # postinc_expression
