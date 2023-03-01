@@ -136,3 +136,9 @@ def group(self: behav.Group, context: ScalarStaticnessContext):
 	expr = self.expr.generate(context)
 
 	return expr
+
+def dereference(self: behav.DeReference, context: ScalarStaticnessContext):
+	return StaticType.NONE
+
+def union_definition(self: behav.UnionDefinition, context: ScalarStaticnessContext):
+	return StaticType.NONE
