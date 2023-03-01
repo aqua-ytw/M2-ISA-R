@@ -736,3 +736,9 @@ def operator(self: behav.Operator, context: TransformerContext):
 
 def code_literal(self: behav.CodeLiteral, context: TransformerContext):
 	return CodeString(self.val, False, context.native_size, False)
+
+def dereference(self: behav.DeReference, context: TransformerContext):
+	return CodeString("foo", False, 42, False)
+
+def union_definition(self: behav.UnionDefinition, context: TransformerContext):
+	return CodeString("bar", False, 42, False)
