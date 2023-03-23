@@ -23,22 +23,11 @@ from .load_order import LoadOrder
 from .utils import make_parser
 
 
-def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument("top_level", help="The top-level CoreDSL file.")
-	parser.add_argument("--log", default="info", choices=["critical", "error", "warning", "info", "debug"])
+logger = logging.getLogger("parser")
 
-	args = parser.parse_args()
 
-	app_dir = pathlib.Path(__file__).parent.resolve()
-
-	logging.basicConfig(level=getattr(logging, args.log.upper()))
-	logger = logging.getLogger("parser")
-
-	top_level = pathlib.Path(args.top_level)
-	abs_top_level = top_level.resolve()
+def parse(abs_top_level):
 	search_path = abs_top_level.parent
-
 	parser = make_parser(abs_top_level)
 
 	try:
@@ -57,9 +46,6 @@ def main():
 	except M2Error as e:
 		logger.critical("Error during load order building: %s", e)
 		sys.exit(1)
-
-	model_path = search_path.joinpath('gen_model')
-	model_path.mkdir(exist_ok=True)
 
 	temp_save = {}
 	models: "dict[tuple(int, int), arch.CoreDef]" = {}
@@ -198,6 +184,28 @@ def main():
 
 			op.statements.insert(0, pc_inc)
 			instr_def.operation = op
+	return search_path, models
+
+
+def main():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("top_level", help="The top-level CoreDSL file.")
+	parser.add_argument("--log", default="info", choices=["critical", "error", "warning", "info", "debug"])
+
+	args = parser.parse_args()
+
+	app_dir = pathlib.Path(__file__).parent.resolve()
+
+	logging.basicConfig(level=getattr(logging, args.log.upper()))
+
+	top_level = pathlib.Path(args.top_level)
+
+	abs_top_level = top_level.resolve()
+
+	search_path, models = parse(abs_top_level)
+
+	model_path = search_path.joinpath('gen_model')
+	model_path.mkdir(exist_ok=True)
 
 	logger.info("dumping model")
 	with open(model_path / (abs_top_level.stem + '.m2isarmodel'), 'wb') as f:
