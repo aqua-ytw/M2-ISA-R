@@ -144,14 +144,14 @@ def main():
 			output_path.mkdir(parents=True)
 
 		# generate and write files
-		write_arch_struct(core, start_time, output_path)
-		write_arch_header(core, start_time, output_path)
-		write_arch_cpp(core, start_time, output_path, False)
-		write_arch_specific_header(core, start_time, output_path)
-		write_arch_specific_cpp(core, start_time, output_path)
-		write_arch_lib(core, start_time, output_path)
-		write_arch_cmake(core, start_time, output_path, args.separate)
-		write_arch_gdbcore(core, start_time, output_path)
+		# write_arch_struct(core, start_time, output_path)
+		# write_arch_header(core, start_time, output_path)
+		# write_arch_cpp(core, start_time, output_path, False)
+		# write_arch_specific_header(core, start_time, output_path)
+		# write_arch_specific_cpp(core, start_time, output_path)
+		# write_arch_lib(core, start_time, output_path)
+		# write_arch_cmake(core, start_time, output_path, args.separate)
+		# write_arch_gdbcore(core, start_time, output_path)
 		write_functions(core, start_time, output_path, args.static_scalars)
 		write_instructions(core, start_time, output_path, args.separate, args.static_scalars, BlockEndType[args.block_end_on.upper()])
 
